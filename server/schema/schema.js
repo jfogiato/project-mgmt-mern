@@ -1,6 +1,5 @@
 const Project = require('../models/Project.js');
 const Client = require('../models/Client.js');
-
 const {
   GraphQLObjectType,
   GraphQLID,
@@ -8,8 +7,10 @@ const {
   GraphQLSchema,
   GraphQLList,
   GraphQLNonNull,
+  GraphQLEnumType,
 } = require('graphql');
 
+// GraphQL Object Types
 const ClientType = new GraphQLObjectType({
   name: 'Client',
   fields: () => ({
@@ -36,6 +37,7 @@ const ProjectType = new GraphQLObjectType({
   })
 });
 
+// GraphQL Base Query
 const RootQuery = new GraphQLObjectType ({
   name: 'RootQueryType',
   fields: {
@@ -97,7 +99,36 @@ const mutation = new GraphQLObjectType({
       resolve(parent, args) {
         return Client.findByIdAndRemove(args.id);
       }
-    }
+    },
+    addProject: {
+      type: ProjectType,
+      args: {
+        name: { type: GraphQLNonNull(GraphQLString)},
+        description: { type: GraphQLNonNull(GraphQLString)},
+        status: {
+          type: new GraphQLEnumType({
+            name: 'ProjectStatus',
+            values: {
+              'new': { value: 'Not started' },
+              'progress': { value: 'In Progress' },
+              'completed': { value: 'Completed' },
+            }
+          }),
+          defaultValue: 'Not Started'
+        },
+        clientId: { type: GraphQLNonNull(GraphQLID)},
+      },
+      resolve(parent, args) {
+        const project = new Project({
+          name: args.name,
+          description: args.email,
+          status: args.phone,
+          clientId: args.clientId,
+        });
+
+        return project.save();
+      }
+    },
   }
 })
 
